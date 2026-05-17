@@ -315,8 +315,8 @@
                 </tr>
             </table>
             <div class="doc-footer">
-                <span>LANT/PACAREAINST 16710.2</span>
-                <span>* Original - USCG * Copy - Owner * Copy - Examiner</span>
+                <span> </span>
+                <span> </span>
                 <span>Page 1 of 3</span>
             </div>
         </div>
@@ -491,8 +491,8 @@
             </div>
 
             <div class="doc-footer">
-                <span>LANT/PACAREAINST 16710.2</span>
-                <span>* Original - USCG * Copy - Owner * Copy - Examiner</span>
+                <span> </span>
+                <span> </span>
                 <span>Page 2 of 3</span>
             </div>
         </div>
@@ -639,8 +639,8 @@
             </div>
 
             <div class="doc-footer">
-                <span>LANT/PACAREAINST 16710.2</span>
-                <span>* Original - USCG * Copy - Owner * Copy - Examiner</span>
+                <span> </span>
+                <span> </span>
                 <span>Page 3 of 3</span>
             </div>
         </div>
@@ -894,7 +894,35 @@ document.addEventListener("DOMContentLoaded", () => {
             exportBtn.addEventListener('click', () => {
                 const element = document.getElementById('pdf-content');
                 const vesselName = p1Vessel && p1Vessel.value ? p1Vessel.value : "Unknown_Vessel";
-                
+
+                // html2canvas cannot word-wrap <textarea> content — it renders
+                // everything as one long clipped line.  Swap every textarea for
+                // a plain <div> that html2canvas CAN render correctly, then
+                // restore the original textareas after the PDF is saved.
+                const swaps = [];
+                element.querySelectorAll('textarea').forEach(ta => {
+                    const cs  = window.getComputedStyle(ta);
+                    const div = document.createElement('div');
+                    div.style.fontFamily   = cs.fontFamily;
+                    div.style.fontSize     = ta.style.fontSize || cs.fontSize;
+                    div.style.lineHeight   = cs.lineHeight;
+                    div.style.border       = '1px solid #ccc';
+                    div.style.padding      = '4px';
+                    div.style.boxSizing    = 'border-box';
+                    div.style.width        = '100%';
+                    div.style.minHeight    = cs.height;
+                    div.style.whiteSpace   = 'pre-wrap';
+                    div.style.wordBreak    = 'break-word';
+                    div.style.overflowWrap = 'break-word';
+                    div.style.background   = 'transparent';
+                    div.style.marginTop    = cs.marginTop;
+                    div.style.color        = '#000';
+                    div.textContent = ta.value;
+                    ta.parentNode.insertBefore(div, ta);
+                    ta.style.display = 'none';
+                    swaps.push({ ta, div });
+                });
+
                 const opt = {
                     margin:       [0, 0, 0, 0], 
                     filename:     `UPV_Examination_${vesselName}.pdf`,
@@ -903,7 +931,14 @@ document.addEventListener("DOMContentLoaded", () => {
                     jsPDF:        { unit: 'in', format: 'tabloid', orientation: 'portrait' },
                     pagebreak:    { mode: 'css', inside: 'avoid' }
                 };
-                html2pdf().set(opt).from(element).save();
+
+                html2pdf().set(opt).from(element).save().then(() => {
+                    // Restore all textareas
+                    swaps.forEach(({ ta, div }) => {
+                        ta.style.display = '';
+                        if (div.parentNode) div.parentNode.removeChild(div);
+                    });
+                });
             });
         }
 
