@@ -900,7 +900,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     filename:     `UPV_Examination_${vesselName}.pdf`,
                     image:        { type: 'jpeg', quality: 0.98 },
                     html2canvas:  { scale: 2, useCORS: true },
-                    jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' },
+                    jsPDF:        { unit: 'in', format: 'tabloid', orientation: 'portrait' },
                     pagebreak:    { mode: 'css', inside: 'avoid' }
                 };
                 html2pdf().set(opt).from(element).save();
