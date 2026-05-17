@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>USCG UPV Safety Examination Results</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        :root {
+            --border-color: #000;
+            --bg-color: #f8f9fa;
+        }
+        body { 
+            font-family: Arial, sans-serif; 
+            font-size: 12px; 
+            padding: 20px; 
+            background-color: #e9ecef; 
+        }
+        .document-container {
+            max-width: 950px;
+            margin: auto;
+        }
+        .document-page { 
+            margin: 0 auto 30px auto; 
+            background: #fff; 
+            padding: 30px 40px; 
+            border: 1px solid #ccc; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1); 
+            page-break-after: always;
+            page-break-inside: avoid;
+            box-sizing: border-box;
+            min-height: 1220px; 
+            position: relative;
+        }
+        h1 { text-align: center; font-size: 16px; margin: 0 0 5px 0; font-weight: bold; }
+        h2 { text-align: center; font-size: 14px; margin: 0 0 15px 0; font-weight: normal; }
+        .page-title { 
+            font-weight: bold; 
+            border-bottom: 2px solid var(--border-color); 
+            padding-bottom: 10px; 
+            margin-bottom: 15px; 
+        }
+        
+        table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+        th, td { border: 1px solid var(--border-color); padding: 5px; vertical-align: top; line-height: 1.3; }
+        
+        .checkbox-group { display: flex; flex-direction: column; gap: 4px; margin-top: 5px; }
+        .inline-checkbox { display: flex; gap: 15px; flex-wrap: wrap; margin-top: 5px;}
+        
+        input[type="text"], input[type="date"], input[type="tel"], input[type="email"] { 
+            width: 100%; box-sizing: border-box; border: none; border-bottom: 1px solid #999; 
+            outline: none; font-family: inherit; font-size: 13px; background: transparent; margin-top: 4px; 
+        }
+        textarea { 
+            width: 100%; box-sizing: border-box; border: 1px solid #ccc; height: 50px; 
+            outline: none; font-family: inherit; font-size: 13px; resize: vertical; margin-top: 5px; 
+        }
+        
+        /* Requirements Table Styles */
+        .req-table th { background-color: #e2e2e2; text-align: center; font-size: 11px; padding: 8px 4px; }
+        .req-table th:nth-child(1) { width: 50%; text-align: left; }
+        .req-table th:nth-child(2) { width: 8%; }
+        .req-table th:nth-child(3) { width: 27%; }
+        .req-table th:nth-child(4), .req-table th:nth-child(5), .req-table th:nth-child(6) { width: 5%; font-size: 10px;}
+        
+        .section-header td { background-color: #d9d9d9; font-weight: bold; border-top: 2px solid var(--border-color); border-bottom: 2px solid var(--border-color); padding: 4px 6px;}
+        .req-row td { border-bottom: 1px solid #aaa; font-size: 12px; vertical-align: middle; padding: 4px 5px;}
+        .req-row td:nth-child(2), .req-row td:nth-child(4), .req-row td:nth-child(5), .req-row td:nth-child(6) { text-align: center; }
+        .req-row a { color: #0056b3; text-decoration: none; }
+        .req-row a:hover { text-decoration: underline; }
+        
+        .footer-table { width: 100%; display: flex; justify-content: space-between; margin-top: 15px; font-weight: bold; position: absolute; bottom: 40px; left: 0; padding: 0 40px; box-sizing: border-box;}
+        .footer-table input { width: 200px; display: inline-block; }
+        
+        .doc-footer { font-size: 10px; display: flex; justify-content: space-between; margin-top: 15px; border-top: 1px solid var(--border-color); padding-top: 5px; position: absolute; bottom: 20px; left: 40px; right: 40px;}
+
+        /* Signature Pads */
+        .sig-container { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; border-bottom: 1px solid #999; cursor: pointer; background: #f4f4f4; color: #666; font-style: italic; font-size: 11px; box-sizing: border-box; position: relative; overflow: hidden; }
+        .sig-img { max-height: 100%; max-width: 100%; display: none; object-fit: contain; }
+        
+        /* Modal Styles */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; align-items: center; justify-content: center; }
+        .modal-content { background: #fff; padding: 20px; border-radius: 8px; width: 90%; max-width: 600px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+        .modal-header { font-size: 14px; font-weight: bold; margin-bottom: 15px; text-align: center; line-height: 1.4;}
+        .canvas-container { border: 2px dashed #ccc; background: #fafafa; border-radius: 4px; touch-action: none; margin-bottom: 15px; }
+        canvas { width: 100%; height: 200px; display: block; }
+        .modal-actions { display: flex; justify-content: space-between; }
+        .btn { padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .btn-clear { background: #f0ad4e; color: white; }
+        .btn-cancel { background: #d9534f; color: white; }
+        .btn-save { background: #5cb85c; color: white; }
+
+        /* Form Controls */
+        .controls { text-align: center; margin: 30px 0; display: flex; justify-content: center; gap: 15px;}
+        .control-btn { padding: 15px 25px; color: white; border: none; cursor: pointer; font-weight: bold; border-radius: 5px; font-size: 14px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        .btn-clear-all { background: #d9534f; }
+        .btn-export-pdf { background: #0275d8; }
+
+        /* Print styles optimized for html2pdf 1-to-1 pagination */
+        @media print {
+            body { padding: 0; background: #fff; }
+            .document-container { max-width: 100%; width: 100%; }
+            .document-page { box-shadow: none; border: none; padding: 0.2in 0.4in; margin: 0; page-break-after: always; min-height: 10.5in; }
+            .controls { display: none !important; }
+            .sig-container { border-bottom: 1px solid #000; background: transparent; }
+            .no-print { display: none !important; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="controls">
+    <button type="button" id="export-pdf" class="control-btn btn-export-pdf">Export to PDF</button>
+    <button type="button" id="clear-btn" class="control-btn btn-clear-all">Clear Form Data</button>
+</div>
+
+<form id="upv-form">
+    <div class="document-container" id="pdf-content">
+        <div class="document-page">
+            <div class="page-title">
+                <h1>USCG UNINSPECTED PASSENGER VESSEL SAFETY EXAMINATION RESULTS</h1>
+                <h2>&lt; 100 GT &le; 6 Passenger for Hire</h2>
+            </div>
+            <table>
+                <tr>
+                    <td colspan="2">Vessel Name<br><input type="text" name="p1_vessel_name" id="p1_vessel_name"></td>
+                    <td colspan="2">Vessel Examination Location<br><input type="text" name="exam_location"></td>
+                    <td>Prior Decal<br>
+                        <div class="inline-checkbox">
+                            <label><input type="radio" name="prior_decal" value="Yes"> Yes</label>
+                            <label><input type="radio" name="prior_decal" value="No"> No</label>
+                        </div>
+                    </td>
+                    <td>Photos<br>
+                        <div class="inline-checkbox">
+                            <label><input type="checkbox" name="photo_bow" value="Bow"> Bow</label>
+                            <label><input type="checkbox" name="photo_stern" value="Stern"> Stern</label>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2">Registration/COD #<br><input type="text" name="reg_cod"><br><br>Expiration Date: <input type="date" name="exp_date" style="width: auto;"></td>
+                    <td colspan="2">Hailing Port<br><input type="text" name="hailing_port"></td>
+                    <td colspan="2">HIN<br><input type="text" name="hin"></td>
+                </tr>
+                <tr>
+                    <td colspan="2">Vessel Make, Model & Year Mfg.<br><input type="text" name="vessel_mfg"></td>
+                    <td>Length<br><input type="text" name="length"></td>
+                    <td>Gross Tons<br><input type="text" name="gross_tons"></td>
+                    <td>Net Tons<br><input type="text" name="net_tons"></td>
+                    <td>Max POB<br><input type="text" name="max_pob"></td>
+                </tr>
+                <tr>
+                    <td>Fuel Type:<br>
+                        <div class="checkbox-group">
+                            <label><input type="checkbox" name="fuel_gas" value="Gas"> Gas</label>
+                            <label><input type="checkbox" name="fuel_diesel" value="Diesel"> Diesel</label>
+                            <label><input type="checkbox" name="fuel_electric" value="Electric"> Electric</label>
+                        </div>
+                    </td>
+                    <td>Propulsion:<br>
+                        <div class="checkbox-group">
+                            <label><input type="checkbox" name="prop_inboard" value="Inboard"> Inboard</label>
+                            <label><input type="checkbox" name="prop_outboard" value="Outboard"> Outboard</label>
+                            <label><input type="checkbox" name="prop_sail" value="Sail"> Sail</label>
+                            <label><input type="checkbox" name="prop_rowed" value="Rowed"> Rowed</label>
+                        </div>
+                    </td>
+                    <td>Hull Structure:<br>
+                        <div class="checkbox-group">
+                            <label><input type="checkbox" name="hull_wood" value="Wood"> Wood</label>
+                            <label><input type="checkbox" name="hull_fiberglass" value="Fiberglass"> Fiberglass</label>
+                            <label><input type="checkbox" name="hull_steel" value="Steel"> Steel</label>
+                            <label><input type="checkbox" name="hull_aluminum" value="Aluminum"> Aluminum</label>
+                        </div>
+                    </td>
+                    <td>Horsepower:<br>
+                        <div class="inline-checkbox">
+                            <label><input type="radio" name="horsepower_type" value="Single"> Single</label>
+                            <label><input type="radio" name="horsepower_type" value="Twin"> Twin</label>
+                        </div>
+                        <input type="text" name="horsepower_val" placeholder="HP">
+                    </td>
+                    <td colspan="2">Vessel Route & Endorsement<br>
+                        <div style="display:flex; justify-content:space-between; margin-top: 5px;">
+                            <div class="checkbox-group">
+                                <label><input type="checkbox" name="route_local" value="Local"> Local Area</label>
+                                <label><input type="checkbox" name="route_inland" value="Inland"> Inland</label>
+                                <label><input type="checkbox" name="route_great_lakes" value="GL"> Great Lakes</label>
+                                <label><input type="checkbox" name="route_near_coastal" value="NC"> Near Coastal</label>
+                                <label><input type="checkbox" name="route_oceans" value="Oceans"> Oceans</label>
+                            </div>
+                            <div class="checkbox-group">
+                                <label><input type="checkbox" name="route_livery" value="Livery"> Livery for Hire</label>
+                                <label><input type="checkbox" name="route_coastwise" value="Coastwise"> Coastwise</label>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="3">Owner Name<br><input type="text" name="owner_name"></td>
+                    <td colspan="3">Marine Employer<br><input type="text" name="marine_employer"></td>
+                </tr>
+                <tr>
+                    <td colspan="3">Mailing Address, City, State, Zip Code<br><textarea name="owner_address"></textarea></td>
+                    <td colspan="3">Mailing Address, City, State, Zip Code<br><textarea name="employer_address"></textarea></td>
+                </tr>
+                <tr>
+                    <td colspan="3">Telephone: <input type="tel" name="owner_phone"><br><br>Email Address: <input type="email" name="owner_email"></td>
+                    <td colspan="3">Telephone: <input type="tel" name="employer_phone"><br><br>Email Address: <input type="email" name="employer_email"></td>
+                </tr>
+                <tr>
+                    <td colspan="6">Name/Reference #/Expiration Date on Merchant Mariner Credential:<br><input type="text" name="mariner_credential"></td>
+                </tr>
+                <tr>
+                    <td colspan="6" style="padding: 15px;">
+                        <label style="display: flex; gap: 10px; align-items: flex-start;">
+                            <input type="checkbox" name="voluntary_exam_completed" value="1" style="margin-top: 3px;">
+                            <span>A voluntary UPV dockside examination has been completed. However as a result of the examination of this vessel, the following deficiencies were noted that prevented the issuance of the Uninspected Passenger Vessel Safety Decal: (note deficiency with an explanation and identify any Extremely Hazardous Conditions (EHC) :</span>
+                        </label>
+                        <textarea id="deficiencies_box" name="deficiencies" style="height: 60px; margin-top: 10px; font-size: 13px;"></textarea>
+                        
+                        <div style="text-align: center; margin: 15px 0; font-weight: bold;">When these deficiencies are corrected, please call to schedule a re-examination.</div>
+                        
+                        <div style="display: flex; gap: 15px; align-items: flex-end;">
+                            <div style="flex: 2;">
+                                <label style="display:block; margin-bottom: 2px;">Examiner Printed Name & ID #:</label>
+                                <input type="text" name="def_exam_name" style="height: 35px; margin: 0;">
+                            </div>
+                            <div style="flex: 1;">
+                                <label style="display:block; margin-bottom: 2px;">Telephone #:</label>
+                                <input type="text" name="def_exam_phone" style="height: 35px; margin: 0;">
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 15px; margin-top: 15px; align-items: flex-end;">
+                            <div style="flex: 2;">
+                                <label style="display:block; margin-bottom: 2px;">Examiner Signature:</label>
+                                <div class="sig-container" data-target="def_exam_sig" data-header="Examiner Signature" style="height: 35px; margin: 0;">
+                                    <span class="no-print">Tap to Sign</span>
+                                    <img id="def_exam_sig_img" class="sig-img" alt="Signature">
+                                    <input type="hidden" name="def_exam_sig" id="def_exam_sig_val">
+                                </div>
+                            </div>
+                            <div style="flex: 1;">
+                                <label style="display:block; margin-bottom: 2px;">Date:</label>
+                                <input type="date" name="def_exam_date" style="height: 35px; margin: 0;">
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="6" style="padding: 15px;">
+                        <p style="margin-top: 0;"><strong>Congratulations!</strong> Your vessel is in full compliance with all applicable UPV regulations. The issued decal is valid for <strong>ONE</strong> year provided that all regulatory and operating requirements remain current. Please keep this form on board and show it to the Coast Guard if the vessel is boarded.</p>
+                        
+                        <div style="text-align: center; margin: 15px 0; font-weight: bold; font-size: 14px;">
+                            DECAL EXPIRATION DATE: <input type="text" name="decal_exp" style="width: 250px; text-align: center;">
+                        </div>
+                        
+                        <p><em>I CERTIFY that I have personally examined the vessel and find it meets the requirements of this report at the time of the examination.</em></p>
+                        
+                        <div style="display: flex; gap: 15px; margin-top: 15px; align-items: flex-end;">
+                            <div style="flex: 1;">
+                                <label style="display:block; margin-bottom: 2px;">Examiner Printed Name & ID:</label>
+                                <input type="text" name="cert_exam_name" style="height: 35px; margin: 0;">
+                            </div>
+                            <div style="flex: 1;">
+                                <label style="display:block; margin-bottom: 2px;">Issuing Examiner Signature:</label>
+                                <div class="sig-container" data-target="cert_exam_sig" data-header="Issuing Examiner Signature" style="height: 35px; margin: 0;">
+                                    <span class="no-print">Tap to Sign</span>
+                                    <img id="cert_exam_sig_img" class="sig-img" alt="Signature">
+                                    <input type="hidden" name="cert_exam_sig" id="cert_exam_sig_val">
+                                </div>
+                            </div>
+                            <div style="flex: 1;">
+                                <label style="display:block; margin-bottom: 2px;">Telephone #:</label>
+                                <input type="text" name="cert_exam_phone" style="height: 35px; margin: 0;">
+                            </div>
+                        </div>
+                        
+                        <p style="font-size: 11px; color: #444; margin-top: 15px;">By accepting this UPV decal you are pledging to always maintain your vessel and equipment to the standard of safety qualified for during this examination. Remove this decal if the vessel is sold or the vessel no longer meets the requirements or no longer engages as an Uninspected Passenger Vessel.</p>
+                        
+                        <div style="display: flex; gap: 15px; margin-top: 15px; align-items: flex-end;">
+                            <div style="flex: 2;">
+                                <label style="display:block; margin-bottom: 2px;">Vessel Representative Signature:</label>
+                                <div class="sig-container" data-target="rep_sig" data-header="By accepting this UPV decal you are pledging to always maintain your vessel and equipment to the standard of safety qualified for during this examination. Remove this decal if the vessel is sold or the vessel no longer meets the requirements or no longer engages as an Uninspected Passenger Vessel." style="height: 35px; margin: 0;">
+                                    <span class="no-print">Tap to Sign</span>
+                                    <img id="rep_sig_img" class="sig-img" alt="Signature">
+                                    <input type="hidden" name="rep_sig" id="rep_sig_val">
+                                </div>
+                            </div>
+                            <div style="flex: 1;">
+                                <label style="display:block; margin-bottom: 2px;">Date:</label>
+                                <input type="date" name="rep_date" style="height: 35px; margin: 0;">
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="6" style="padding: 10px 15px;">
+                        <div style="display: flex; align-items: flex-end; justify-content: space-between;">
+                            <div style="flex: 1;">
+                                <label style="display:inline-block; font-weight: bold; margin-bottom: 2px;">MISLE Entry Date:</label>
+                                <input type="date" name="misle_date" style="width: 150px; height: 35px; margin-left: 10px; margin-bottom: 0;">
+                            </div>
+                            <div style="flex: 1; display: flex; align-items: flex-end; justify-content: flex-end;">
+                                <label style="display:inline-block; font-weight: bold; margin-bottom: 2px;">Signature:</label>
+                                <div class="sig-container" data-target="misle_sig" data-header="MISLE Entry Signature" style="width: 250px; height: 35px; margin-left: 10px; margin-bottom: 0;">
+                                    <span class="no-print">Tap to Sign</span>
+                                    <img id="misle_sig_img" class="sig-img" alt="Signature">
+                                    <input type="hidden" name="misle_sig" id="misle_sig_val">
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+            <div class="doc-footer">
+                <span>LANT/PACAREAINST 16710.2</span>
+                <span>* Original - USCG * Copy - Owner * Copy - Examiner</span>
+                <span>Page 1 of 3</span>
+            </div>
+        </div>
+
+        <div class="document-page">
+            <h1 style="margin-bottom: 20px;">REQUIREMENTS FOR UNINSPECTED PASSENGER VESSEL</h1>
+            <table class="req-table">
+                <thead>
+                    <tr>
+                        <th>REQUIREMENTS</th>
+                        <th>GUIDE PAGE</th>
+                        <th>REGULATION</th>
+                        <th>YES</th>
+                        <th>NO</th>
+                        <th>N/A</th>
+                    </tr>
+                </thead>
+                <tbody id="requirements-body-1">
+                    <tr class="section-header"><td colspan="6">PERSONNEL LICENSING</td></tr>
+                    <tr class="req-row">
+                        <td class="req-desc">USCG License: Original on board and current for area of operations & tonnage</td>
+                        <td>10</td>
+                        <td><a href="https://www.ecfr.gov/current/title-46/part-15" target="_blank">46 CFR § 15.401/.605/.905</a><br>& <a href="https://www.ecfr.gov/current/title-46/section-26.20-1" target="_blank">46 CFR § 26.20-1</a></td>
+                        <td><input type="radio" name="req_1" value="yes"></td><td><input type="radio" name="req_1" value="no"></td><td><input type="radio" name="req_1" value="na"></td>
+                    </tr>
+                    <tr class="req-row">
+                        <td class="req-desc">Sufficient operators for two watches (Voyages > 12 hrs)</td>
+                        <td>11</td>
+                        <td><a href="https://www.govinfo.gov/link/uscode/46/8104" target="_blank">46 USC 8104 (b)</a></td>
+                        <td><input type="radio" name="req_2" value="yes"></td><td><input type="radio" name="req_2" value="no"></td><td><input type="radio" name="req_2" value="na"></td>
+                    </tr>
+
+                    <tr class="section-header"><td colspan="6">DOCUMENTATION: VESSELS &ge; 5 NET TONS</td></tr>
+                    <tr class="req-row">
+                        <td class="req-desc">Current and original on board</td>
+                        <td>12</td>
+                        <td><a href="https://www.ecfr.gov/current/title-46/part-67" target="_blank">46 CFR § 67.7/67.15/.313/.319</a></td>
+                        <td><input type="radio" name="req_3" value="yes"></td><td><input type="radio" name="req_3" value="no"></td><td><input type="radio" name="req_3" value="na"></td>
+                    </tr>
+                    <tr class="req-row">
+                        <td class="req-desc">Endorsed for Coastwise Trade</td>
+                        <td>12</td>
+                        <td><a href="https://www.ecfr.gov/current/title-19/section-4.80" target="_blank">19 CFR § 4.80</a> & <a href="https://www.ecfr.gov/current/title-46/part-67" target="_blank">46 CFR § 67.19/.163</a></td>
+                        <td><input type="radio" name="req_4" value="yes"></td><td><input type="radio" name="req_4" value="no"></td><td><input type="radio" name="req_4" value="na"></td>
+                    </tr>
+                    <tr class="req-row">
+                        <td class="req-desc">Official number correct size, permanently affixed and visible on interior structural part of hull</td>
+                        <td>12</td>
+                        <td><a href="https://www.ecfr.gov/current/title-46/section-67.121" target="_blank">46 CFR § 67.121</a></td>
+                        <td><input type="radio" name="req_5" value="yes"></td><td><input type="radio" name="req_5" value="no"></td><td><input type="radio" name="req_5" value="na"></td>
+                    </tr>
+                    <tr class="req-row">
+                        <td class="req-desc">Display of name/Hailing port correct size and location</td>
+                        <td>13</td>
+                        <td><a href="https://www.ecfr.gov/current/title-46/part-67" target="_blank">46 CFR § 67.117/.119/.123 (a)(b)(d)</a></td>
+                        <td><input type="radio" name="req_6" value="yes"></td><td><input type="radio" name="req_6" value="no"></td><td><input type="radio" name="req_6" value="na"></td>
+                    </tr>
+
+                    <tr class="section-header"><td colspan="6">DOCUMENTATION: VESSELS &lt; 5 NET TONS</td></tr>
+                    <tr class="req-row">
+                        <td class="req-desc">Valid State Numbering Certificate on board</td>
+                        <td>13</td>
+                        <td><a href="https://www.ecfr.gov/current/title-33/part-173" target="_blank">33 CFR § 173.21/.23</a> & <a href="https://www.ecfr.gov/current/title-33/section-174.19" target="_blank">174.19(a)</a></td>
+                        <td><input type="radio" name="req_7" value="yes"></td><td><input type="radio" name="req_7" value="no"></td><td><input type="radio" name="req_7" value="na"></td>
+                    </tr>
+                    <tr class="req-row">
+                        <td class="req-desc">State Numbers displayed correct size and location</td>
+                        <td>13</td>
+                        <td><a href="https://www.ecfr.gov/current/title-33/part-173" target="_blank">33 CFR § 173.25/.27</a></td>
+                        <td><input type="radio" name="req_8" value="yes"></td><td><input type="radio" name="req_8" value="no"></td><td><input type="radio" name="req_8" value="na"></td>
+                    </tr>
+
+                    <tr class="section-header"><td colspan="6">DRUG AND ALCOHOL TESTING IN EFFECT</td></tr>
+                    <tr class="req-row">
+                        <td class="req-desc">Marine Employer participating in chemical testing program</td>
+                        <td>14</td>
+                        <td><a href="https://www.ecfr.gov/current/title-46/section-16.113" target="_blank">46 CFR § 16.113</a></td>
+                        <td><input type="radio" name="req_9" value="yes"></td><td><input type="radio" name="req_9" value="no"></td><td><input type="radio" name="req_9" value="na"></td>
+                    </tr>
+                    <tr class="req-row">
+                        <td class="req-desc">All crewmembers in random drug testing program</td>
+                        <td>14</td>
+                        <td><a href="https://www.ecfr.gov/current/title-46/section-16.230" target="_blank">46 CFR § 16.230</a></td>
+                        <td><input type="radio" name="req_10" value="yes"></td><td><input type="radio" name="req_10" value="no"></td><td><input type="radio" name="req_10" value="na"></td>
+                    </tr>
+                    <tr class="req-row">
+                        <td class="req-desc">Aware of required action of failed chemical test</td>
+                        <td>15</td>
+                        <td><a href="https://www.ecfr.gov/current/title-46/section-16.201" target="_blank">46 CFR § 16.201</a></td>
+                        <td><input type="radio" name="req_11" value="yes"></td><td><input type="radio" name="req_11" value="no"></td><td><input type="radio" name="req_11" value="na"></td>
+                    </tr>
+                    <tr class="req-row">
+                        <td class="req-desc">Alcohol Testing equipment on board for all crewmembers</td>
+                        <td>15</td>
+                        <td><a href="https://www.ecfr.gov/current/title-46/section-4.06-15" target="_blank">46 CFR § 4.06-15</a></td>
+                        <td><input type="radio" name="req_12" value="yes"></td><td><input type="radio" name="req_12" value="no"></td><td><input type="radio" name="req_12" value="na"></td>
+                    </tr>
+                    <tr class="req-row">
+                        <td class="req-desc">Aware prohibition of vessel operations while intoxicated.</td>
+                        <td>17</td>
+                        <td><a href="https://www.ecfr.gov/current/title-33/part-95" target="_blank">33 CFR § 95.015/.020 (b)(c)</a></td>
+                        <td><input type="radio" name="req_13" value="yes"></td><td><input type="radio" name="req_13" value="no"></td><td><input type="radio" name="req_13" value="na"></td>
+                    </tr>
+
+                    <tr class="section-header"><td colspan="6">MARINE ACCIDENT AND CASUALTY REPORTING - OPERATOR AWARE OF REPORTING REQUIREMENTS</td></tr>
+                    <tr class="req-row">
+                        <td class="req-desc">State Numbered Vessels: Aware of reporting requirements</td>
+                        <td>19</td>
+                        <td><a href="https://www.ecfr.gov/current/title-33/part-173" target="_blank">33 CFR § 173.51/.59</a> & <a href="https://www.ecfr.gov/current/title-46/section-4.01-1" target="_blank">46 CFR § 4.01-1</a></td>
+                        <td><input type="radio" name="req_14" value="yes"></td><td><input type="radio" name="req_14" value="no"></td><td><input type="radio" name="req_14" value="na"></td>
+                    </tr>
+                    <tr class="req-row">
+                        <td class="req-desc">Documented Vessels: Aware of reporting requirements</td>
+                        <td>19 & 20</td>
+                        <td><a href="https://www.ecfr.gov/current/title-46/part-4" target="_blank">46 CFR § 4.01-1/4.03-1/4.03-2/4.05-1<br>/4.05-10, /4.05-12</a></td>
+                        <td><input type="radio" name="req_15" value="yes"></td><td><input type="radio" name="req_15" value="no"></td><td><input type="radio" name="req_15" value="na"></td>
+                    </tr>
+
+                    <tr class="section-header"><td colspan="6">COMMUNICATIONS</td></tr>
+                    <tr class="req-row">
+                        <td class="req-desc">VHF-FM Radio: &ge; 20 meters - Power driven vessels.<br>Radiotelephone VHF-FM required with ch. 22A and depending on location ch. 67. 2nd required in VTS area.</td>
+                        <td>21</td>
+                        <td><a href="https://www.ecfr.gov/current/title-33/section-26.03" target="_blank">33 CFR § 26.03 (a) (1) (e) (f)</a></td>
+                        <td><input type="radio" name="req_16" value="yes"></td><td><input type="radio" name="req_16" value="no"></td><td><input type="radio" name="req_16" value="na"></td>
+                    </tr>
+                    <tr class="req-row">
+                        <td class="req-desc">FCC Marine Radio Ship Station License: &ge; 20 meters - Valid license required for SSB/HF and/or International Voyage.</td>
+                        <td>21</td>
+                        <td><a href="https://www.ecfr.gov/current/title-47/part-80" target="_blank">47 CFR § 80.13 & .25</a></td>
+                        <td><input type="radio" name="req_18" value="yes"></td><td><input type="radio" name="req_18" value="no"></td><td><input type="radio" name="req_18" value="na"></td>
+                    </tr>
+                    <tr class="req-row">
+                        <td class="req-desc">Radio Operator Permit: &ge; 20 meters Valid</td>
+                        <td>21</td>
+                        <td><a href="https://www.ecfr.gov/current/title-47/section-80.163" target="_blank">47 CFR § 80.163</a></td>
+                        <td><input type="radio" name="req_19" value="yes"></td><td><input type="radio" name="req_19" value="no"></td><td><input type="radio" name="req_19" value="na"></td>
+                    </tr>
+
+                    <tr class="section-header"><td colspan="6">CHARTS AND NAUTICAL PUBLICATIONS</td></tr>
+                    <tr class="req-row">
+                        <td class="req-desc">Current charts of operating area, Coast Pilot, Light List & Tide.<br>Tables - extracts or copies of transited area acceptable.</td>
+                        <td>22</td>
+                        <td><a href="https://www.ecfr.gov/current/title-46/section-26.03-4" target="_blank">46 CFR § 26.03-4</a></td>
+                        <td><input type="radio" name="req_20" value="yes"></td><td><input type="radio" name="req_20" value="no"></td><td><input type="radio" name="req_20" value="na"></td>
+                    </tr>
+                    <tr class="req-row">
+                        <td class="req-desc">Inland Navigation Rules: &ge; 12 meters - where required</td>
+                        <td>23</td>
+                        <td><a href="https://www.ecfr.gov/current/title-33/section-88.05" target="_blank">33 CFR § 88.05</a></td>
+                        <td><input type="radio" name="req_22" value="yes"></td><td><input type="radio" name="req_22" value="no"></td><td><input type="radio" name="req_22" value="na"></td>
+                    </tr>
+
+                    <tr class="section-header"><td colspan="6">NAVIGATION LIGHTS AND SOUND SIGNALS</td></tr>
+                    <tr class="req-row">
+                        <td class="req-desc">Proper and operational navigation lights</td>
+                        <td>23</td>
+                        <td>COLREGS Rule 23</td>
+                        <td><input type="radio" name="req_23" value="yes"></td><td><input type="radio" name="req_23" value="no"></td><td><input type="radio" name="req_23" value="na"></td>
+                    </tr>
+                    <tr class="req-row">
+                        <td class="req-desc">Operational sound producing device. &ge; 12 meters bell and whistle req.<br>Inland Waters</td>
+                        <td>24</td>
+                        <td>COLREGS Rule 33</td>
+                        <td><input type="radio" name="req_24" value="yes"></td><td><input type="radio" name="req_24" value="no"></td><td><input type="radio" name="req_24" value="na"></td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <div class="footer-table">
+                <div>Vessel Name: <input type="text" name="p2_vessel_name" id="p2_vessel_name" readonly style="background-color: transparent; border-bottom: 1px solid #999;"></div>
+                <div>Date of Exam: <input type="date" name="p2_exam_date"></div>
+            </div>
+
+            <div class="doc-footer">
+                <span>LANT/PACAREAINST 16710.2</span>
+                <span>* Original - USCG * Copy - Owner * Copy - Examiner</span>
+                <span>Page 2 of 3</span>
+            </div>
+        </div>
+
+        <div class="document-page">
+            <h1 style="margin-bottom: 20px;">REQUIREMENTS FOR UNINSPECTED PASSENGER VESSEL (Continued)</h1>
+            <table class="req-table">
+                <thead>
+                    <tr>
+                        <th>REQUIREMENTS</th>
+                        <th>GUIDE PAGE</th>
+                        <th>REGULATION</th>
+                        <th>YES</th>
+                        <th>NO</th>
+                        <th>N/A</th>
+                    </tr>
+                </thead>
+                <tbody id="requirements-body-2">
+                    <tr class="section-header"><td colspan="6">GARBAGE POLLUTION PREVENTION</td></tr>
+                    <tr class="req-row">
+                        <td class="req-desc">Garbage Placard(s): Vessels &ge; 26 ft. posted in prominent locations</td>
+                        <td>26 & 27</td>
+                        <td><a href="https://www.ecfr.gov/current/title-33/part-151" target="_blank">33 CFR § 151.59/151.66</a></td>
+                        <td><input type="radio" name="req_25" value="yes"></td><td><input type="radio" name="req_25" value="no"></td><td><input type="radio" name="req_25" value="na"></td>
+                    </tr>
+                    <tr class="req-row">
+                        <td class="req-desc">Waste Management Plan: on board for vessels &ge; 40 feet and oceangoing</td>
+                        <td>28</td>
+                        <td><a href="https://www.ecfr.gov/current/title-33/section-151.57" target="_blank">33 CFR § 151.57</a></td>
+                        <td><input type="radio" name="req_26" value="yes"></td><td><input type="radio" name="req_26" value="no"></td><td><input type="radio" name="req_26" value="na"></td>
+                    </tr>
+
+                    <tr class="section-header"><td colspan="6">LIFESAVING EQUIPMENT</td></tr>
+                    <tr class="req-row">
+                        <td class="req-desc">Personal Flotation Device: 1 approved Type I in serviceable condition of appropriate size readily available for each person on board</td>
+                        <td>29</td>
+                        <td><a href="https://www.ecfr.gov/current/title-46/part-25" target="_blank">46 CFR § 25.25-5 (c), § 25.25-7<br>§ 25.25-9 (a), § 25.25-11</a>, <a href="https://www.ecfr.gov/current/title-46/section-160.002-6" target="_blank">§ 160.002-6</a></td>
+                        <td><input type="radio" name="req_27" value="yes"></td><td><input type="radio" name="req_27" value="no"></td><td><input type="radio" name="req_27" value="na"></td>
+                    </tr>
+                    <tr class="req-row">
+                        <td class="req-desc">Hybrid PFD may be substituted if worn</td>
+                        <td>29</td>
+                        <td><a href="https://www.ecfr.gov/current/title-46/part-25" target="_blank">46 CFR § 25.25-5 (f) (1) (2) (3)</a><br><a href="https://www.ecfr.gov/current/title-46/section-160.077-1" target="_blank">46 CFR § 160.077-1</a></td>
+                        <td><input type="radio" name="req_28" value="yes"></td><td><input type="radio" name="req_28" value="no"></td><td><input type="radio" name="req_28" value="na"></td>
+                    </tr>
+                    <tr class="req-row">
+                        <td class="req-desc">PFD's: Retro Reflection material and light as applicable</td>
+                        <td>29</td>
+                        <td><a href="https://www.ecfr.gov/current/title-46/part-25" target="_blank">46 CFR § 25.25-13/-15</a></td>
+                        <td><input type="radio" name="req_29" value="yes"></td><td><input type="radio" name="req_29" value="no"></td><td><input type="radio" name="req_29" value="na"></td>
+                    </tr>
+                    <tr class="req-row">
+                        <td class="req-desc">Ring Buoy: Approved, immediately available with grabline in serviceable condition. Applies to vessels &ge; 26 ft.</td>
+                        <td>30</td>
+                        <td><a href="https://www.ecfr.gov/current/title-46/part-25" target="_blank">46 CFR § 25.25-5 (d)/-7/-9 (b,)<br>§ 25.25-11</a>, <a href="https://www.ecfr.gov/current/title-46/section-160.050" target="_blank">§ 160.050</a></td>
+                        <td><input type="radio" name="req_30" value="yes"></td><td><input type="radio" name="req_30" value="no"></td><td><input type="radio" name="req_30" value="na"></td>
+                    </tr>
+                    <tr class="req-row">
+                        <td class="req-desc">Visual Distress Signals: number required, readily accessible, not expired.</td>
+                        <td>31</td>
+                        <td><a href="https://www.ecfr.gov/current/title-33/part-175" target="_blank">33 CFR § 175.19 / § 175.110/.120/<br>§ 175.125/.128/.130</a></td>
+                        <td><input type="radio" name="req_31" value="yes"></td><td><input type="radio" name="req_31" value="no"></td><td><input type="radio" name="req_31" value="na"></td>
+                    </tr>
+
+                    <tr class="section-header"><td colspan="6">FIRE PREVENTION AND SUPPRESSION</td></tr>
+                    <tr class="req-row">
+                        <td class="req-desc">Fire Extinguisher(s): Sufficient number of serviceable Type B USCG approved or UL listed for marine use. Current service date where applicable.</td>
+                        <td>35</td>
+                        <td><a href="https://www.ecfr.gov/current/title-46/part-25" target="_blank">46 CFR § 25.30-5 (b), §25.30-10 (b), (1)<br>(3) (4), § 25.30-20 (a) (1) & (b)</a></td>
+                        <td><input type="radio" name="req_32" value="yes"></td><td><input type="radio" name="req_32" value="no"></td><td><input type="radio" name="req_32" value="na"></td>
+                    </tr>
+                    <tr class="req-row">
+                        <td class="req-desc">Gas Engines: ventilation ducts, blower(s) and backfire flame control</td>
+                        <td>37, 38<br>& 41</td>
+                        <td><a href="https://www.ecfr.gov/current/title-33/part-183" target="_blank">33 CFR § 183.601 (2) (d) (f)/183.610</a><br><a href="https://www.ecfr.gov/current/title-46/part-25" target="_blank">46 CFR § 25.35 -1/.40-1</a></td>
+                        <td><input type="radio" name="req_33" value="yes"></td><td><input type="radio" name="req_33" value="no"></td><td><input type="radio" name="req_33" value="na"></td>
+                    </tr>
+                    <tr class="req-row">
+                        <td class="req-desc">Cooking, Heating and Lighting Systems: All secured and compliant with remote shut off valve on LPG or CN cooking systems</td>
+                        <td>40</td>
+                        <td><a href="https://www.ecfr.gov/current/title-46/part-25" target="_blank">46 CFR § 25.45-1/-2</a></td>
+                        <td><input type="radio" name="req_34" value="yes"></td><td><input type="radio" name="req_34" value="no"></td><td><input type="radio" name="req_34" value="na"></td>
+                    </tr>
+
+                    <tr class="section-header"><td colspan="6">SAFETY INSTRUCTIONS AND ORIENTATION</td></tr>
+                    <tr class="req-row">
+                        <td class="req-desc">Safety Orientation: Announcements are made prior to journey</td>
+                        <td>43</td>
+                        <td><a href="https://www.ecfr.gov/current/title-46/section-26.03-1" target="_blank">46 CFR § 26.03-1 (a)</a></td>
+                        <td><input type="radio" name="req_35" value="yes"></td><td><input type="radio" name="req_35" value="no"></td><td><input type="radio" name="req_35" value="na"></td>
+                    </tr>
+                    <tr class="req-row">
+                        <td class="req-desc">Passenger List or Count: Conducted for each day of operation</td>
+                        <td>43</td>
+                        <td><a href="https://www.govinfo.gov/link/uscode/46/3502" target="_blank">46 USC 3502</a></td>
+                        <td><input type="radio" name="req_36" value="yes"></td><td><input type="radio" name="req_36" value="no"></td><td><input type="radio" name="req_36" value="na"></td>
+                    </tr>
+                    <tr class="req-row">
+                        <td class="req-desc">Emergency Instructions: Posted in prominent & accessible location</td>
+                        <td>44</td>
+                        <td><a href="https://www.ecfr.gov/current/title-46/section-26.03-1" target="_blank">46 CFR § 26.03-1 (a)</a></td>
+                        <td><input type="radio" name="req_37" value="yes"></td><td><input type="radio" name="req_37" value="no"></td><td><input type="radio" name="req_37" value="na"></td>
+                    </tr>
+
+                    <tr class="section-header"><td colspan="6">MARINE SANITATION DEVICES</td></tr>
+                    <tr class="req-row">
+                        <td class="req-desc">Certified Marine Sanitation Device correct for length<br>Type 1 (only under 65ft.), Type II or Type III</td>
+                        <td>46</td>
+                        <td><a href="https://www.ecfr.gov/current/title-33/section-159.7" target="_blank">33 CFR § 159.7 (a)</a></td>
+                        <td><input type="radio" name="req_38" value="yes"></td><td><input type="radio" name="req_38" value="no"></td><td><input type="radio" name="req_38" value="na"></td>
+                    </tr>
+                    <tr class="req-row">
+                        <td class="req-desc">Acceptable method(s) of securing overboard discharge device</td>
+                        <td>47</td>
+                        <td><a href="https://www.ecfr.gov/current/title-33/section-159.7" target="_blank">33 CFR § 159.7 (b) c)</a></td>
+                        <td><input type="radio" name="req_39" value="yes"></td><td><input type="radio" name="req_39" value="no"></td><td><input type="radio" name="req_39" value="na"></td>
+                    </tr>
+                    <tr class="req-row">
+                        <td class="req-desc">Identification placard attached on Type I or II</td>
+                        <td>47</td>
+                        <td><a href="https://www.ecfr.gov/current/title-33/part-159" target="_blank">33 CFR § 159.55/.59</a></td>
+                        <td><input type="radio" name="req_40" value="yes"></td><td><input type="radio" name="req_40" value="no"></td><td><input type="radio" name="req_40" value="na"></td>
+                    </tr>
+
+                    <tr class="section-header"><td colspan="6">OIL POLLUTION PREVENTION</td></tr>
+                    <tr class="req-row">
+                        <td class="req-desc">Oil Pollution Placard: applies to vessels &ge; 26 ft. 5" x 8" posted in machinery space and bilge control area.</td>
+                        <td>48</td>
+                        <td><a href="https://www.ecfr.gov/current/title-33/section-155.450" target="_blank">33 CFR § 155.450</a></td>
+                        <td><input type="radio" name="req_41" value="yes"></td><td><input type="radio" name="req_41" value="no"></td><td><input type="radio" name="req_41" value="na"></td>
+                    </tr>
+                    <tr class="req-row">
+                        <td class="req-desc">Bilge Slops Retention: ability to contain oily water on board; oily-water separator.</td>
+                        <td>49</td>
+                        <td><a href="https://www.ecfr.gov/current/title-33/part-155" target="_blank">33 CFR § 155.330/.350/.770</a></td>
+                        <td><input type="radio" name="req_42" value="yes"></td><td><input type="radio" name="req_42" value="no"></td><td><input type="radio" name="req_42" value="na"></td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <div class="footer-table">
+                <div>Vessel Name: <input type="text" name="p3_vessel_name" id="p3_vessel_name" readonly style="background-color: transparent; border-bottom: 1px solid #999;"></div>
+                <div>Date of Exam: <input type="date" name="p3_exam_date"></div>
+            </div>
+
+            <div class="doc-footer">
+                <span>LANT/PACAREAINST 16710.2</span>
+                <span>* Original - USCG * Copy - Owner * Copy - Examiner</span>
+                <span>Page 3 of 3</span>
+            </div>
+        </div>
+    </div>
+</form>
+
+<div id="sig-modal" class="modal-overlay">
+    <div class="modal-content">
+        <div id="modal-header-text" class="modal-header">Please Sign Below</div>
+        <div class="canvas-container">
+            <canvas id="sig-canvas"></canvas>
+        </div>
+        <div class="modal-actions">
+            <button type="button" class="btn btn-clear" id="sig-clear">Clear</button>
+            <button type="button" class="btn btn-cancel" id="sig-cancel">Cancel</button>
+            <button type="button" class="btn btn-save" id="sig-save">Save Signature</button>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    // 1. DEFENSIVE INITIALIZATION
+    try {
+        const form = document.getElementById('upv-form');
+        const inputs = form.querySelectorAll('input, textarea');
+        const defBox = document.getElementById('deficiencies_box');
+        const noRadios = document.querySelectorAll('input[type="radio"][value="no"]');
+        
+        // 2. VESSEL NAME MIRRORING
+        const p1Vessel = document.getElementById('p1_vessel_name');
+        const p2Vessel = document.getElementById('p2_vessel_name');
+        const p3Vessel = document.getElementById('p3_vessel_name');
+
+        if (p1Vessel && p2Vessel && p3Vessel) {
+            p1Vessel.addEventListener('input', (e) => {
+                p2Vessel.value = e.target.value;
+                p3Vessel.value = e.target.value;
+            });
+        }
+
+        // 3. SECURE LOCAL STORAGE DATA LOADING
+        let savedData = {};
+        try {
+            const rawData = localStorage.getItem('upvFormDataV6');
+            if (rawData) {
+                savedData = JSON.parse(rawData);
+            }
+        } catch (e) {
+            console.warn("Storage warning - Cannot read saved data:", e);
+        }
+
+        // Populate standard inputs
+        inputs.forEach(input => {
+            try {
+                if (input.type === 'radio') {
+                    if (savedData[input.name] === input.value) input.checked = true;
+                } else if (input.type === 'checkbox') {
+                    if (savedData[input.name] && Array.isArray(savedData[input.name]) && savedData[input.name].includes(input.value)) input.checked = true;
+                } else {
+                    if (savedData[input.name]) input.value = savedData[input.name];
+                }
+            } catch (err) {}
+        });
+
+        // Sync mirrored vessels on load
+        if (p1Vessel && p1Vessel.value) {
+            if(p2Vessel) p2Vessel.value = p1Vessel.value;
+            if(p3Vessel) p3Vessel.value = p1Vessel.value;
+        }
+
+        // Populate Signatures visually
+        ['def_exam_sig', 'cert_exam_sig', 'rep_sig', 'misle_sig'].forEach(id => {
+            if (savedData[id]) {
+                const img = document.getElementById(id + '_img');
+                const hidden = document.getElementById(id + '_val');
+                const span = document.querySelector(`[data-target="${id}"] span`);
+                if (img && hidden) {
+                    img.src = savedData[id];
+                    img.style.display = 'block';
+                    hidden.value = savedData[id];
+                    if (span) span.style.display = 'none';
+                }
+            }
+        });
+
+        // Save Function
+        const saveData = () => {
+            try {
+                const data = {};
+                inputs.forEach(input => {
+                    if (input.type === 'radio') {
+                        if (input.checked) data[input.name] = input.value;
+                    } else if (input.type === 'checkbox') {
+                        if (!data[input.name]) data[input.name] = [];
+                        if (input.checked) data[input.name].push(input.value);
+                    } else {
+                        data[input.name] = input.value;
+                    }
+                });
+                localStorage.setItem('upvFormDataV6', JSON.stringify(data));
+            } catch (e) {
+                console.warn("Storage warning - Cannot write data:", e);
+            }
+        };
+
+        // Bind Save Function
+        form.addEventListener('input', saveData);
+        form.addEventListener('change', saveData);
+
+        // 4. DYNAMIC DEFICIENCIES BOX
+        const updateDeficiencies = () => {
+            if (!defBox) return;
+            const issues = [];
+            noRadios.forEach(radio => {
+                if(radio.checked) {
+                    const row = radio.closest('.req-row');
+                    if (row) {
+                        const descEl = row.querySelector('.req-desc');
+                        if (descEl) {
+                            issues.push(descEl.innerText.replace(/\s+/g, ' ').trim());
+                        }
+                    }
+                }
+            });
+
+            if(issues.length > 0) {
+                defBox.value = "The following requirements have not been met: " + issues.join("; ");
+            } else if (defBox.value.startsWith("The following requirements have not been met:")) {
+                defBox.value = ""; 
+            }
+
+            // Auto-scale font size
+            defBox.style.fontSize = '13px'; 
+            if(defBox.scrollHeight > defBox.clientHeight) {
+                let size = 13;
+                while(defBox.scrollHeight > defBox.clientHeight && size > 8) {
+                    size--;
+                    defBox.style.fontSize = size + 'px';
+                }
+            }
+        };
+
+        // Bind Deficiencies tracking
+        noRadios.forEach(radio => radio.addEventListener('change', () => {
+            updateDeficiencies();
+            saveData();
+        }));
+        // Run once on load to populate pre-existing saves
+        updateDeficiencies();
+
+        // 5. SIGNATURE PAD LOGIC
+        const modal = document.getElementById('sig-modal');
+        const canvas = document.getElementById('sig-canvas');
+        const ctx = canvas ? canvas.getContext('2d') : null;
+        let currentTarget = null;
+        let isDrawing = false;
+
+        if (modal && canvas && ctx) {
+            function resizeCanvas() {
+                const ratio = Math.max(window.devicePixelRatio || 1, 1);
+                canvas.width = canvas.offsetWidth * ratio;
+                canvas.height = canvas.offsetHeight * ratio;
+                ctx.scale(ratio, ratio);
+                ctx.lineWidth = 2;
+                ctx.lineCap = 'round';
+                ctx.strokeStyle = '#000';
+            }
+            
+            document.querySelectorAll('.sig-container').forEach(container => {
+                container.addEventListener('click', () => {
+                    currentTarget = container.dataset.target;
+                    const headerText = document.getElementById('modal-header-text');
+                    if (headerText) {
+                        headerText.innerText = container.dataset.header || 'Please Sign Below';
+                    }
+                    modal.style.display = 'flex';
+                    resizeCanvas();
+                });
+            });
+
+            const getPos = (e) => {
+                const rect = canvas.getBoundingClientRect();
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                return { x: clientX - rect.left, y: clientY - rect.top };
+            };
+
+            const startDraw = (e) => { e.preventDefault(); isDrawing = true; const pos = getPos(e); ctx.beginPath(); ctx.moveTo(pos.x, pos.y); };
+            const draw = (e) => { if(!isDrawing) return; e.preventDefault(); const pos = getPos(e); ctx.lineTo(pos.x, pos.y); ctx.stroke(); };
+            const stopDraw = () => { isDrawing = false; ctx.closePath(); };
+
+            canvas.addEventListener('mousedown', startDraw);
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('mouseup', stopDraw);
+            canvas.addEventListener('mouseout', stopDraw);
+            canvas.addEventListener('touchstart', startDraw, {passive: false});
+            canvas.addEventListener('touchmove', draw, {passive: false});
+            canvas.addEventListener('touchend', stopDraw);
+
+            document.getElementById('sig-clear').addEventListener('click', () => {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            });
+
+            document.getElementById('sig-cancel').addEventListener('click', () => {
+                modal.style.display = 'none';
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            });
+
+            document.getElementById('sig-save').addEventListener('click', () => {
+                if(currentTarget) {
+                    const dataUrl = canvas.toDataURL('image/png');
+                    const img = document.getElementById(currentTarget + '_img');
+                    const hidden = document.getElementById(currentTarget + '_val');
+                    const span = document.querySelector(`[data-target="${currentTarget}"] span`);
+                    
+                    if (img && hidden) {
+                        img.src = dataUrl;
+                        img.style.display = 'block';
+                        hidden.value = dataUrl;
+                        if(span) span.style.display = 'none';
+                        saveData();
+                    }
+                }
+                modal.style.display = 'none';
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            });
+        }
+
+        // 6. CLEAR BUTTON
+        const clearBtn = document.getElementById('clear-btn');
+        if (clearBtn) {
+            clearBtn.addEventListener('click', () => {
+                if(confirm('Are you sure you want to clear all form data including signatures?')) {
+                    try { localStorage.removeItem('upvFormDataV6'); } catch(e){}
+                    form.reset();
+                    if (defBox) {
+                        defBox.value = "";
+                        defBox.style.fontSize = "13px";
+                    }
+                    document.querySelectorAll('.sig-img').forEach(img => { img.src = ""; img.style.display = 'none'; });
+                    document.querySelectorAll('.sig-container span').forEach(span => span.style.display = 'inline');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+            });
+        }
+
+        // 7. EXPORT TO PDF
+        const exportBtn = document.getElementById('export-pdf');
+        if (exportBtn) {
+            exportBtn.addEventListener('click', () => {
+                const element = document.getElementById('pdf-content');
+                const vesselName = p1Vessel && p1Vessel.value ? p1Vessel.value : "Unknown_Vessel";
+                
+                const opt = {
+                    margin:       [0, 0, 0, 0], 
+                    filename:     `UPV_Examination_${vesselName}.pdf`,
+                    image:        { type: 'jpeg', quality: 0.98 },
+                    html2canvas:  { scale: 2, useCORS: true },
+                    jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' },
+                    pagebreak:    { mode: 'css', inside: 'avoid' }
+                };
+                html2pdf().set(opt).from(element).save();
+            });
+        }
+
+    } catch (criticalError) {
+        console.error("Critical error in form initialization. Execution halted:", criticalError);
+    }
+});
+</script>
+</body>
+</html>
